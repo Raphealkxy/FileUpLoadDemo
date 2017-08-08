@@ -1,0 +1,186 @@
+文件上传功能应用非常广泛，例如：头像上传、商品图片、新闻图片、相册、网盘 
+
+文件上传
+1、客户端，为用户提供文件上传输入框
+2、服务器端，编写程序，将上传文件数据，保存到服务器端
+* 将客户端一个文件，传递到服务器端
+
+文件上传编程
+1、编写上传文件form表单
+提供input type="file" ，必须为上传项提供name属性，上传form表单必须post，enctype设置为multipart/form-data
+
+2、服务器端，完全根据request.getInputStream 方法 对请求体内容进行分割，获得文件上传内容 ----- 非常麻烦
+使用Apache 公司提供 commons-fileupload 工具包完成文件上传
+* commons-fileupload  和  jsp smart upload 框架（在model1 时代主流使用） ----- 在Servlet3.0 之后，Servlet程序本身就支持文件上传
+
+下载 commons-fileupload / commons-io 包 --- 将 jar包复制WEB-INF/lib
+fileupload 快速入门
+1、使用工厂 DiskFileItemFactory
+2、通过工厂构造解析器 ServletFileupLoad
+3、解析器将请求体各个部分 以分隔线切割 ---- 多个部分（每个部分就是FileItem）
+4. 通过FileItem 的isFormField 判断是否为文件上传
+上传文件
+getInputStream 获得文件内容
+getName 获得文件名
+
+不是上传文件
+getFieldName 获得name属性
+getString 获得value属性
+
+********** 对于老版本浏览器，会存在客户端路径，使用stringAPI 将路径切割掉
+
+FileUpload 核心类 API详解
+1、DiskFileItemFactory
+setSizeThreshold(int sizeThreshold) ----- 设置内存缓冲区大小
+setRepository(java.io.File repository ----- 设置临时文件存放位置
+
+* 上传文件优先保存内存缓冲区，当内存缓存区不够用，在硬盘上产生临时文件，临时文件保存指定临时文件目录中
+* 临时文件与源文件内容相同
+* 中文附件名 乱码问题  ------------- upload.setHeaderEncoding("utf-8");
+* 当上传文件完成时，删除临时文件 fileItem.delete();
+
+2、ServletFileUpload
+setHeaderEncoding(java.lang.String encoding) ----- 设置上传文件附件名编码（解决乱码）
+parseRequest(HttpServletRequest request) ----- 解析请求体内容，返回List<FileItem> 
+isMultipartContent(javax.servlet.http.HttpServletRequest request) ----- 判断form的enctype是否为multipart/form-data (true 是文件上传form)
+setFileSizeMax(long fileSizeMax) 设置单文件最大大小   setSizeMax(long sizeMax) 设置请求最大大小
+
+***** setProgressListener(ProgressListener pListener) 为文件上传设置监听器，监听文件上传全过程
+* 文件上传进度条
+
+3、FileItem
+isFormField() 是否为文件上传域，true不是文件上传，false是文件上传
+
+如果不是文件上传
+getFieldName  获得name属性
+getString  获得value属性 ------------ 文件上传表单中request.setCharacterEncoding 不能使用，request.getParameter不能使用
+* 请求中有中文 getString(java.lang.String encoding) 
+
+如果是文件上传
+getName  获得文件名
+getInputStream  获得文件内容
+
+整理乱码解决：
+附件名乱码 servletFileupload.setHeaderEncoding(编码)
+普通form项中文乱码 fileItem.getString(编码)
+
+文件上传注意问题
+1、乱码问题（附件名乱码 servletFileupload.setHeaderEncoding，普通form项乱码fileItem.getString）
+2、临时文件删除，必须先关闭FileItem的输入流，再调用FileItem.delete方法 删除临时文件
+3、文件保存目录
+* WEB-INF在浏览器端不允许通过URL直接访问
+WEB-INF内 ：必须通过服务器端程序去访问，Servlet ---- getRealPath(/WEB-INF) ---------------- 需要权限，需要身份认证
+WEB-INF外 ：浏览器直接通过URL访问  ------------------ 任何人都可以访问
+
+思考：电影会员点播网站，在线看电影，收费。上传电影放到哪里？ WEB-INF 里面
+QQ头像、京东商城商品图片 。上传后 放到哪里？ WEB-INF外面
+
+4、将所有文件放到相同目录中，当文件重名时，会发生覆盖效果 -------- 上传文件名唯一
+UUID + filename
+
+5、当系统人气很高，当所有上传文件保存到一个目录时，随着系统使用，目录中文件数量非常巨大
+* 目录出现访问非常慢，无法访问情况
+* 采用目录分散算法
+按时间（一天一目录）、按用户  ----- 最主流
+每个目录存放固定数量文件  ----- 每个目录存放1000个文件。超过1000 新建一个目录
+hachcode 存放分散目录 
+
+ProgressListener 文件上传进程监听器，监听文件上传进度 ------ 在页面上设计上传进度条 （AJAX案例）
+传输速率 = 已经上传大小/已经使用时间;
+剩余时间 = 剩余大小/速率;
+
+1024 b/ms = (1024/1024)*1000 KB/S
+ 
+--------------------------------------------------------------------------------------------------------------------------------------------
+文件下载
+第一种方式，用超链接指向要下载的文件 （DefaultServlet 将资源返回，如果浏览器对资源格式不识别，询问用户是否下载）
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
